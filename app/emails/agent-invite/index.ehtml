@@ -1,0 +1,21 @@
+import "./style.css";
+
+/**
+ * Invites an agent to the help desk.
+ *
+ * @email
+ */
+<html (inviterName: string, inviteUrl: string)>
+  <body class="email agent-invite">
+    <div class="email-wrap">
+      <h1>Join the support team on replyhaven</h1>
+      <p>{inviterName} invited you to answer tickets in the replyhaven help desk.</p>
+      <p><a class="cta" href={inviteUrl}>Accept the invite</a></p>
+      <p>The link sets up your name and password. It works once.</p>
+
+      <div class="email-footer">
+        <p>replyhaven · You received this because an admin added your address.</p>
+      </div>
+    </div>
+  </body>
+</html>

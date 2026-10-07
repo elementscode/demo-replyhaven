@@ -1,0 +1,173 @@
+import "./style.css";
+import { LiveView, type Listener } from "@elements/app";
+import { Shell, ShellUser } from "#app/shared/templates/shell";
+import { Agent, Ticket, Viewer, allViewers } from "#app/shared/services/tickets";
+import { ago, byPriorityThenAge, dueLabel, duration, firstReplyDueAt, initials, isOverdue } from "#app/shared/lib/sla";
+import favicon from "#app/shared/assets/favicons/favicon.svg";
+
+export interface QueueView {
+  key: string;
+  label: string;
+  empty: string;
+}
+
+export const VIEWS: QueueView[] = [
+  { key: "all", label: "All open", empty: "No open tickets. The queue is clear." },
+  { key: "unassigned", label: "Unassigned", empty: "Every open ticket has an owner." },
+  { key: "mine", label: "Mine", empty: "Nothing assigned to you right now." },
+  { key: "new", label: "New", empty: "No new tickets." },
+  { key: "open", label: "Open", empty: "No open tickets." },
+  { key: "pending", label: "Pending", empty: "No tickets waiting on customers." },
+  { key: "solved", label: "Solved", empty: "No solved tickets yet." },
+];
+
+export function inView(t: Ticket, key: string, meId: string): boolean {
+  switch (key) {
+    case "unassigned":
+      return t.status !== "solved" && !t.assigneeId;
+
+    case "mine":
+      return t.status !== "solved" && t.assigneeId === meId;
+
+    case "new":
+    case "open":
+    case "pending":
+    case "solved":
+      return t.status === key;
+
+    default:
+      return t.status !== "solved";
+  }
+}
+
+function rows(tickets: LiveView<Ticket>, key: string, meId: string): Ticket[] {
+  return tickets.filter((t) => inView(t, key, meId)).sort(byPriorityThenAge);
+}
+
+function count(tickets: LiveView<Ticket>, key: string, meId: string): number {
+  return tickets.filter((t) => inView(t, key, meId)).length;
+}
+
+function overdueCount(tickets: LiveView<Ticket>, now: Date): number {
+  return tickets.filter((t) => isOverdue(t, now)).length;
+}
+
+function agentName(agents: Agent[], id: string | null): string {
+  return agents.find((a) => a.id === id)?.name ?? "";
+}
+
+function viewersFor(viewers: Viewer[], ticketId: string): Viewer[] {
+  return viewers.filter((v) => v.ticketId === ticketId);
+}
+
+function onTabClick(view: { value: string }, key: string) {
+  view.value = key;
+  history.replaceState(null, "", key === "all" ? "/" : `/?view=${key}`);
+}
+
+function statusIntent(status: string): string {
+  switch (status) {
+    case "new":
+      return "is-info";
+
+    case "open":
+      return "is-accent";
+
+    case "pending":
+      return "is-warning";
+
+    default:
+      return "is-success";
+  }
+}
+
+<html lang="en" class="page-queue" (
+  me: ShellUser,
+  tickets: LiveView<Ticket>,
+  agents: Agent[],
+  presence: Listener<{ ticketId: string }>,
+  viewers: Viewer[],
+  initialView: string,
+  private view: { value: string } = { value: initialView },
+  private now: { value: Date } = { value: new Date() },
+  private watching: { list: Viewer[] } = { list: viewers },
+) oninit={() => {
+  presence.on("notify", () => watching.list = allViewers());
+  setInterval(() => now.value = new Date(), 30_000);
+}}>
+  <head>
+    <title>Queue · replyhaven</title>
+    <meta name="description" content="The shared support queue.">
+    <link rel="icon" type="image/svg+xml" href={favicon} />
+  </head>
+  <body>
+    <Shell me={me} active="queue">
+      <main class="queue stack is-lg">
+        <div class="queue-head row justify-between">
+          <div class="stack is-xs">
+            <h1>{VIEWS.find((v) => v.key === view.value)?.label}</h1>
+            <p>Sorted by priority, then oldest first.</p>
+          </div>
+          <span e:if={overdueCount(tickets, now.value) > 0} class="pill is-danger">
+            <span class="pill-dot"></span>
+            {overdueCount(tickets, now.value)} overdue
+          </span>
+        </div>
+
+        <div class="tabs">
+          <div class="tab-list" role="tablist">
+            <button e:for={v of VIEWS}
+                    role="tab"
+                    aria-selected={view.value === v.key}
+                    class={["tab", view.value === v.key && "is-active"]}
+                    onclick={() => onTabClick(view, v.key)}>
+              {v.label}
+              <span class="tab-count">{count(tickets, v.key, me.id)}</span>
+            </button>
+          </div>
+        </div>
+
+        <ul class="ticket-list" e:if={count(tickets, view.value, me.id) > 0}>
+          <li e:for={t of rows(tickets, view.value, me.id)}>
+            <a href={`/tickets/${t.number}`} class={["ticket-row", isOverdue(t, now.value) && "is-overdue"]}>
+              <span class={["prio", `is-${t.priority}`]}>{t.priority}</span>
+
+              <span class="ticket-main">
+                <span class="ticket-subject"><span class="ticket-number">#{t.number}</span>{t.subject}</span>
+                <span class="ticket-meta">
+                  <span>{t.customerName}</span>
+                  <span aria-hidden="true">·</span>
+                  <span>opened {ago(t.createdAt, now.value)}</span>
+                  <span e:for={tag of t.tags} class="tag">{tag}</span>
+                </span>
+              </span>
+
+              <span class="ticket-flags">
+                <span e:if={viewersFor(watching.list, t.id).length > 0}
+                      class="viewers"
+                      title={`${viewersFor(watching.list, t.id).map((v) => v.userName).join(", ")} viewing`}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+                  <span e:for={v of viewersFor(watching.list, t.id)} class="avatar is-sm">{initials(v.userName)}</span>
+                </span>
+                <span e:if={isOverdue(t, now.value)} class="pill is-danger" title={`First reply was due ${ago(firstReplyDueAt(t), now.value)}`}>
+                  <span class="pill-dot"></span>
+                  Overdue {duration(+now.value - +firstReplyDueAt(t))}
+                </span>
+                <span e:elseif={dueLabel(t, now.value)} class="due">{dueLabel(t, now.value)}</span>
+              </span>
+
+              <span class={["pill ticket-status", statusIntent(t.status)]}>{t.status}</span>
+
+              <span e:if={t.assigneeId} class="avatar" title={agentName(agents, t.assigneeId)}>{initials(agentName(agents, t.assigneeId))}</span>
+              <span e:else class="avatar is-empty" title="Unassigned">?</span>
+            </a>
+          </li>
+        </ul>
+
+        <div e:else class="card queue-empty">
+          <p>{VIEWS.find((v) => v.key === view.value)?.empty}</p>
+        </div>
+      </main>
+    </Shell>
+  </body>
+</html>

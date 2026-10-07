@@ -1,0 +1,119 @@
+import "./style.css";
+import { Shell, ShellUser } from "#app/shared/templates/shell";
+import { initials } from "#app/shared/lib/sla";
+import { TeamMember, inviteAgent, revokeInvite } from "./services";
+import favicon from "#app/shared/assets/favicons/favicon.svg";
+
+interface InviteForm {
+  email: string;
+  name: string;
+  error: string;
+  sent: string;
+  busy: boolean;
+}
+
+function onInvite(form: InviteForm, list: { members: TeamMember[] }) {
+  form.busy = true;
+  form.error = "";
+  form.sent = "";
+
+  try {
+    list.members = inviteAgent(form.email, form.name);
+    form.sent = form.email;
+    form.email = "";
+    form.name = "";
+  } catch (err: any) {
+    form.error = err.message;
+  }
+
+  form.busy = false;
+}
+
+function onRevoke(member: TeamMember, list: { members: TeamMember[] }) {
+  if (confirm(`Revoke the invite for ${member.email}?`)) {
+    list.members = revokeInvite(member.id);
+  }
+}
+
+<html lang="en" class="page-team" (
+  me: ShellUser,
+  members: TeamMember[],
+  private list: { members: TeamMember[] } = { members },
+  private form: InviteForm = {
+    email: "",
+    name: "",
+    error: "",
+    sent: "",
+    busy: false,
+  },
+)>
+  <head>
+    <title>Team · replyhaven</title>
+    <meta name="description" content="Invite and manage agents.">
+    <link rel="icon" type="image/svg+xml" href={favicon} />
+  </head>
+  <body>
+    <Shell me={me} active="team">
+      <main class="team stack is-lg">
+        <div class="team-head stack is-xs">
+          <h1>Team</h1>
+          <p>Invite agents by email. They pick their name and password from the link.</p>
+        </div>
+
+        <form class="card" onsubmit={() => onInvite(form, list)}>
+          <div class="card-body stack">
+            <div class="invite-form">
+              <div class="field">
+                <label for="invite-email">Email</label>
+                <input id="invite-email" type="email" autocapitalize="none" spellcheck={false} value={form.email} placeholder="new.agent@replyhaven.dev" required>
+              </div>
+              <div class="field">
+                <label for="invite-name">Name <span class="hint">(optional)</span></label>
+                <input id="invite-name" value={form.name} placeholder="Jordan Blake">
+              </div>
+              <button type="submit" class={["is-primary", form.busy && "is-loading"]} disabled={form.busy}>Send invite</button>
+            </div>
+            <p e:if={form.error} class="error" role="alert">{form.error}</p>
+            <div e:if={form.sent} class="callout is-success" role="status">Invite sent to {form.sent}.</div>
+          </div>
+        </form>
+
+        <div class="card team-table-wrap">
+          <table class="team-table">
+            <thead>
+              <tr>
+                <th>Person</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th class="num">Open tickets</th>
+                <th><span class="sr-only">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr e:for={m of list.members}>
+                <td>
+                  <div class="team-person">
+                    <span class={["avatar", !m.active && "is-empty"]}>{initials(m.name || m.email)}</span>
+                    <div>
+                      {m.name || "Invited agent"}
+                      <small>{m.email}</small>
+                    </div>
+                  </div>
+                </td>
+                <td><span class={["pill", m.role === "admin" && "is-accent"]}>{m.role}</span></td>
+                <td>
+                  <span e:if={m.active} class="pill is-success"><span class="pill-dot"></span>Active</span>
+                  <span e:else class="pill is-warning"><span class="pill-dot"></span>Invited</span>
+                </td>
+                <td class="num">{m.openTickets}</td>
+                <td class="num">
+                  <button e:if={!m.active} class="is-sm" onclick={() => onRevoke(m, list)}>Revoke</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </main>
+    </Shell>
+  </body>
+</html>

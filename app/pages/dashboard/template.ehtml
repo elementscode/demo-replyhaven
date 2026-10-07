@@ -1,0 +1,190 @@
+import "./style.css";
+import { LiveView } from "@elements/app";
+import { Shell, ShellUser } from "#app/shared/templates/shell";
+import { Agent, Ticket } from "#app/shared/services/tickets";
+import { FIRST_REPLY_HOURS, PRIORITIES, Status, duration, isOverdue } from "#app/shared/lib/sla";
+import { firstReplyTimes, median, metTargetShare, openCount, solvedThisWeek } from "./stats";
+import favicon from "#app/shared/assets/favicons/favicon.svg";
+
+const OPEN_STATUSES: Status[] = ["new", "open", "pending"];
+
+function active(tickets: LiveView<Ticket>): Ticket[] {
+  return tickets.filter((t) => t.status !== "solved");
+}
+
+function maxCell(rows: Ticket[]): number {
+  let max = 1;
+  for (let s of OPEN_STATUSES) {
+    for (let p of PRIORITIES) {
+      max = Math.max(max, openCount(rows, s, p));
+    }
+  }
+
+  return max;
+}
+
+/** One hue, light to dark: the share of the accent mixed into the surface. */
+function cellStyle(n: number, max: number): string {
+  if (n === 0) {
+    return "";
+  }
+
+  let pct = Math.round(12 + (n / max) * 68);
+
+  return `background: color-mix(in oklab, var(--accent) ${pct}%, var(--bg-elevated))`;
+}
+
+function isStrong(n: number, max: number): boolean {
+  return n > 0 && 12 + (n / max) * 68 >= 45;
+}
+
+function medianLabel(times: number[]): string {
+  let m = median(times);
+
+  return m === null ? "–" : duration(m);
+}
+
+function solvedRows(tickets: LiveView<Ticket>, agents: Agent[], now: Date) {
+  let rows = agents.map((a) => ({ id: a.id, name: a.name, solved: solvedThisWeek([...tickets], a.id, now) }));
+
+  return rows.sort((a, b) => b.solved - a.solved || a.name.localeCompare(b.name));
+}
+
+function maxSolved(rows: { solved: number }[]): number {
+  return Math.max(1, ...rows.map((r) => r.solved));
+}
+
+function share(value: number | null): string {
+  return value === null ? "–" : `${Math.round(value * 100)}%`;
+}
+
+<html lang="en" class="page-dashboard" (
+  me: ShellUser,
+  tickets: LiveView<Ticket>,
+  agents: Agent[],
+  private now: { value: Date } = { value: new Date() },
+) oninit={() => setInterval(() => now.value = new Date(), 60_000)}>
+  <head>
+    <title>Dashboard · replyhaven</title>
+    <meta name="description" content="How the support queue is doing.">
+    <link rel="icon" type="image/svg+xml" href={favicon} />
+  </head>
+  <body>
+    <Shell me={me} active="dashboard">
+      <main class="dash stack is-lg">
+        <div class="dash-head stack is-xs">
+          <h1>Dashboard</h1>
+          <p>Live from the queue. First reply times cover tickets opened in the last 30 days.</p>
+        </div>
+
+        <div class="tiles">
+          <div class="tile">
+            <p class="tile-label">Open tickets</p>
+            <p class="tile-value">{active(tickets).length}</p>
+            <p class="tile-note">{active(tickets).filter((t) => !t.assigneeId).length} unassigned</p>
+          </div>
+          <div class="tile">
+            <p class="tile-label">Overdue for first reply</p>
+            <p class="tile-value">{tickets.filter((t) => isOverdue(t, now.value)).length}</p>
+            <p class="tile-note" e:if={tickets.filter((t) => isOverdue(t, now.value)).length > 0}><span class="pill is-danger normal-case"><span class="pill-dot"></span>Needs attention</span></p>
+            <p class="tile-note" e:else>Every ticket is inside its target</p>
+          </div>
+          <div class="tile">
+            <p class="tile-label">Median first reply</p>
+            <p class="tile-value">{medianLabel(firstReplyTimes([...tickets], now.value))}</p>
+            <p class="tile-note">across {firstReplyTimes([...tickets], now.value).length} replied tickets</p>
+          </div>
+          <div class="tile">
+            <p class="tile-label">Solved this week</p>
+            <p class="tile-value">{solvedRows(tickets, agents, now.value).reduce((sum, r) => sum + r.solved, 0)}</p>
+            <p class="tile-note">since Monday</p>
+          </div>
+        </div>
+
+        <div class="dash-grid">
+          <section class="card">
+            <div class="card-head">
+              <h2>Open tickets by status and priority</h2>
+              <p>Darker cells hold more tickets.</p>
+            </div>
+            <div class="card-body">
+              <table class="heat">
+                <thead>
+                  <tr>
+                    <th><span class="sr-only">Status</span></th>
+                    <th e:for={p of PRIORITIES} scope="col">{p}</th>
+                    <th scope="col">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr e:for={s of OPEN_STATUSES}>
+                    <th scope="row">{s}</th>
+                    <td e:for={p of PRIORITIES}
+                        class={["cell", openCount(active(tickets), s, p) === 0 && "is-zero", isStrong(openCount(active(tickets), s, p), maxCell(active(tickets))) && "is-strong"]}
+                        style={cellStyle(openCount(active(tickets), s, p), maxCell(active(tickets)))}
+                        title={`${openCount(active(tickets), s, p)} ${s}, ${p} priority`}>
+                      {openCount(active(tickets), s, p)}
+                    </td>
+                    <td class="total">{active(tickets).filter((t) => t.status === s).length}</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Total</th>
+                    <td e:for={p of PRIORITIES} class="total">{active(tickets).filter((t) => t.priority === p).length}</td>
+                    <td class="total">{active(tickets).length}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card-head">
+              <h2>Solved this week per agent</h2>
+              <p>Tickets marked solved since Monday, by assignee.</p>
+            </div>
+            <div class="card-body">
+              <ul class="bars stack is-sm">
+                <li e:for={r of solvedRows(tickets, agents, now.value)} class="bar-row" title={`${r.name}: ${r.solved} solved`}>
+                  <span class="bar-name">{r.name}</span>
+                  <span class="bar-track">
+                    <span class="bar" style={`width: ${(r.solved / maxSolved(solvedRows(tickets, agents, now.value))) * 85}%`}></span>
+                    <span class="bar-value">{r.solved}</span>
+                  </span>
+                </li>
+              </ul>
+            </div>
+          </section>
+        </div>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>First reply by priority</h2>
+            <p>Median time to the first agent reply against each priority's target.</p>
+          </div>
+          <div class="table-wrap">
+            <table class="sla">
+              <thead>
+                <tr>
+                  <th>Priority</th>
+                  <th class="num">Target</th>
+                  <th class="num">Median</th>
+                  <th class="num">Met target</th>
+                  <th class="num">Replied</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr e:for={p of PRIORITIES}>
+                  <td><span class={["prio", `is-${p}`]}>{p}</span></td>
+                  <td class="num">{FIRST_REPLY_HOURS[p]}h</td>
+                  <td class="num">{medianLabel(firstReplyTimes([...tickets], now.value, 30, p))}</td>
+                  <td class="num">{share(metTargetShare([...tickets], now.value, p))}</td>
+                  <td class="num">{firstReplyTimes([...tickets], now.value, 30, p).length}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </Shell>
+  </body>
+</html>

@@ -1,0 +1,204 @@
+@import "#app/shared/styles/page.css";
+
+.dash {
+  padding: var(--space-8) var(--space-8) var(--space-12);
+  max-width: 76rem;
+}
+
+.dash-head h1 {
+  margin: 0;
+  font-size: var(--text-2xl);
+}
+
+.dash-head p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--text-sm);
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.tile {
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  background: var(--bg-elevated);
+}
+
+.tile-label {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+}
+
+.tile-value {
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  font-variant-numeric: tabular-nums;
+}
+
+.tile-note {
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-xs);
+  color: var(--ink-dim);
+}
+
+.tile-note .pill {
+  font-size: var(--text-xs);
+}
+
+.dash-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.dash .card-head h2 {
+  margin: 0;
+  font-size: var(--text-md);
+}
+
+.dash .card-head p {
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-xs);
+  color: var(--ink-dim);
+}
+
+.heat {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.heat th,
+.heat td {
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  text-align: center;
+  font-size: var(--text-sm);
+}
+
+.heat thead th {
+  color: var(--ink-soft);
+  font-weight: var(--weight-medium);
+  text-transform: capitalize;
+}
+
+.heat tbody th {
+  text-align: start;
+  font-weight: var(--weight-medium);
+  text-transform: capitalize;
+}
+
+.heat td.cell {
+  border-radius: var(--radius-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--ink);
+}
+
+.heat td.cell.is-strong {
+  color: var(--accent-ink);
+}
+
+.heat td.cell.is-zero {
+  color: var(--ink-dim);
+  font-weight: var(--weight-regular);
+  background: var(--bg-soft);
+}
+
+.heat .total {
+  color: var(--ink-soft);
+}
+
+.bars {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.bar-row {
+  display: grid;
+  grid-template-columns: 8.5rem minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.bar-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bar-track {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 1.75rem;
+}
+
+.bar {
+  height: 16px;
+  min-width: 2px;
+  border-radius: 0 4px 4px 0;
+  background: var(--accent);
+}
+
+.bar-value {
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.sla td,
+.sla th {
+  font-size: var(--text-sm);
+}
+
+.sla .num {
+  white-space: nowrap;
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 64rem) {
+  .tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dash-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 48rem) {
+  .dash {
+    padding: var(--space-5) var(--space-4) var(--space-10);
+  }
+
+  .sla th:last-child,
+  .sla td:last-child {
+    display: none;
+  }
+
+  .heat th,
+  .heat td {
+    padding: var(--space-1-5) var(--space-1);
+    font-size: var(--text-xs);
+  }
+
+  .tile-value {
+    font-size: var(--text-2xl);
+  }
+}
+
+.table-wrap {
+  overflow-x: auto;
+}

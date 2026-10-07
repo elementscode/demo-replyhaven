@@ -1,0 +1,74 @@
+import "./style.css";
+import { redirect } from "@elements/app";
+import { signout } from "#app/shared/services/auth";
+import { initials } from "#app/shared/lib/sla";
+import { Brand } from "#app/shared/templates/brand";
+
+export interface ShellUser {
+  id: string;
+  name: string;
+  role: "admin" | "agent";
+}
+
+function onSignout() {
+  signout();
+  redirect("/signin");
+}
+
+<Shell (me: ShellUser, active: string)>
+  <div class="app has-sidebar shell">
+    <aside class="shell-side">
+      <Brand />
+
+      <nav aria-label="Main">
+        <ul class="shell-nav stack is-xs">
+          <li>
+            <a href="/" class={[active === "queue" && "is-active"]}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+              Queue
+            </a>
+          </li>
+          <li>
+            <a href="/dashboard" class={[active === "dashboard" && "is-active"]}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 15v2"/><path d="M11 10v7"/><path d="M15 6v11"/><path d="M19 12v5"/></svg>
+              Dashboard
+            </a>
+          </li>
+          <li>
+            <a href="/canned" class={[active === "canned" && "is-active"]}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8"/><path d="M8 13h5"/></svg>
+              Canned replies
+            </a>
+          </li>
+          <li e:if={me.role === "admin"}>
+            <a href="/team" class={[active === "team" && "is-active"]}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              Team
+            </a>
+          </li>
+          <li>
+            <a href="/contact" target="_blank" rel="noopener">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>
+              Contact form
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="shell-me">
+        <span class="avatar">{initials(me.name)}</span>
+        <span class="shell-me-text">
+          <span>{me.name}</span>
+          <small>{me.role}</small>
+        </span>
+        <button class="is-ghost is-sm shell-signout" aria-label="Sign out" title="Sign out" onclick={() => onSignout()}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
+        </button>
+      </div>
+    </aside>
+
+    <div class="app-main shell-main">
+      <slot/>
+    </div>
+  </div>
+</Shell>

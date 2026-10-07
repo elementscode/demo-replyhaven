@@ -1,0 +1,52 @@
+@import "#app/shared/styles/page.css";
+@import "#app/shared/templates/brand/style.css";
+
+.page-contact body {
+  background: var(--bg-canvas);
+}
+
+.contact-main {
+  padding: var(--space-12) var(--space-5) var(--space-16);
+}
+
+.contact-head h1 {
+  margin: 0;
+  font-size: var(--text-3xl);
+}
+
+.contact-head p {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+.contact-card {
+  background: var(--bg-elevated);
+}
+
+.contact-done {
+  text-align: center;
+}
+
+.contact-done h2 {
+  margin: 0;
+}
+
+.contact-done svg {
+  margin-inline: auto;
+  color: var(--success);
+}
+
+.contact-done p {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+@media (max-width: 48rem) {
+  .contact-main {
+    padding: var(--space-6) var(--space-4) var(--space-10);
+  }
+
+  .contact-main form.is-grid {
+    grid-template-columns: 1fr;
+  }
+}

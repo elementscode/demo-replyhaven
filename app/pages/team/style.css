@@ -1,0 +1,67 @@
+@import "#app/shared/styles/page.css";
+
+.team {
+  padding: var(--space-8) var(--space-8) var(--space-12);
+  max-width: 60rem;
+}
+
+.team-head h1 {
+  margin: 0;
+  font-size: var(--text-2xl);
+}
+
+.team-head p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--text-sm);
+}
+
+.invite-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  align-items: end;
+  gap: var(--space-3);
+}
+
+.team-table-wrap {
+  position: relative;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.team-table td {
+  vertical-align: middle;
+}
+
+.team-person {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.team-person small {
+  display: block;
+  color: var(--ink-dim);
+}
+
+.num {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 48rem) {
+  .team {
+    padding: var(--space-5) var(--space-4) var(--space-10);
+  }
+
+  .invite-form {
+    grid-template-columns: 1fr;
+  }
+
+  .team-table th:nth-child(2),
+  .team-table td:nth-child(2),
+  .team-table th:nth-child(4),
+  .team-table td:nth-child(4) {
+    display: none;
+  }
+}

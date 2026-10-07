@@ -1,0 +1,78 @@
+@import "#app/shared/styles/page.css";
+@import "#app/shared/styles/ui.css";
+
+.page-signin body {
+  background: var(--bg-canvas);
+}
+
+.signin-main {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: var(--space-10) var(--space-5);
+}
+
+.signin-panel {
+  width: 100%;
+  max-width: 52rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-6);
+  align-items: start;
+}
+
+.signin-panel > .card {
+  background: var(--bg-elevated);
+}
+
+.signin-head p {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+.signin-head h1 {
+  margin: 0;
+  font-size: var(--text-2xl);
+}
+
+.demo-logins {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.demo-login {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  height: auto;
+  padding: var(--space-2-5) var(--space-3);
+  text-align: start;
+  justify-content: flex-start;
+}
+
+.demo-login-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.demo-login-text small {
+  color: var(--ink-dim);
+  font-weight: var(--weight-regular);
+}
+
+
+.signin-foot {
+  color: var(--ink-soft);
+  font-size: var(--text-sm);
+}
+
+@media (max-width: 48rem) {
+  .signin-panel {
+    grid-template-columns: 1fr;
+    max-width: 26rem;
+  }
+}

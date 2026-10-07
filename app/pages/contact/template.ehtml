@@ -1,0 +1,189 @@
+import "./style.css";
+import { FieldErrors, ValidationError, email, sql, tx } from "@elements/app";
+import { Brand } from "#app/shared/templates/brand";
+import { isEmail, normalizeEmail } from "#app/shared/services/auth";
+import TicketReceivedEmail from "#app/emails/ticket-received";
+import favicon from "#app/shared/assets/favicons/favicon.svg";
+
+export interface ContactForm {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+}
+
+interface ContactState {
+  form: ContactForm;
+  errors: FieldErrors<ContactForm>;
+  sentNumber: number;
+  busy: boolean;
+}
+
+/**
+ * The public way in. Creates the ticket and its first message, and confirms
+ * to the customer by email.
+ *
+ * @rpc
+ */
+export function submitTicket(form: ContactForm): number {
+  let name = form.name.trim();
+  let address = normalizeEmail(form.email);
+  let subject = form.subject.trim();
+  let message = form.message.trim();
+  let errors: FieldErrors<ContactForm> = {};
+
+  if (!name) {
+    errors.name = ["Tell us your name."];
+  }
+
+  if (!isEmail(address)) {
+    errors.email = ["Enter an email address we can reply to."];
+  }
+
+  if (!subject) {
+    errors.subject = ["Add a short subject."];
+  }
+
+  if (message.length < 10) {
+    errors.message = ["Describe the problem in a sentence or two."];
+  }
+
+  if (Object.keys(errors).length > 0) {
+    throw new ValidationError(errors);
+  }
+
+  let ticket = tx(() => {
+    let t = sql<{ id: string; number: number }>(`
+      insert into tickets (
+        subject,
+        customerName,
+        customerEmail
+      ) values (
+        ${subject.slice(0, 200)},
+        ${name.slice(0, 120)},
+        ${address}
+      )
+      returning
+        id,
+        number
+    `).firstOrThrow();
+
+    sql(`
+      insert into messages (
+        ticketId,
+        kind,
+        authorName,
+        body
+      ) values (
+        ${t.id},
+        'customer',
+        ${name.slice(0, 120)},
+        ${message}
+      )
+    `);
+
+    return t;
+  });
+
+  email({
+    to: address,
+    subject: `[#${ticket.number}] ${subject}`,
+    body: new TicketReceivedEmail({
+      customerName: name,
+      ticketNumber: ticket.number,
+      subject,
+      body: message,
+    }),
+  });
+
+  return ticket.number;
+}
+
+function onSubmit(state: ContactState) {
+  state.busy = true;
+
+  try {
+    state.sentNumber = submitTicket(state.form);
+    state.errors = {};
+  } catch (err: any) {
+    state.errors = err instanceof ValidationError ? (err.errors ?? {}) as FieldErrors<ContactForm> : { message: [err.message] };
+  }
+
+  state.busy = false;
+}
+
+function onAnother(state: ContactState) {
+  state.sentNumber = 0;
+  state.form.subject = "";
+  state.form.message = "";
+}
+
+<html lang="en" class="page-contact" (
+  private state: ContactState = {
+    form: {
+      name: "",
+      email: "",
+      subject: "",
+      message: "",
+    },
+    errors: {},
+    sentNumber: 0,
+    busy: false,
+  },
+)>
+  <head>
+    <title>Contact support · replyhaven</title>
+    <meta name="description" content="Write to the support team. We reply by email.">
+    <link rel="icon" type="image/svg+xml" href={favicon} />
+  </head>
+  <body>
+    <main class="contact-main page-shell is-form stack is-lg">
+      <div class="contact-head stack is-sm">
+        <Brand href="/contact" />
+        <h1>Contact support</h1>
+        <p>Tell us what's going on. We reply by email, usually within a few hours.</p>
+      </div>
+
+      <div class="card contact-card">
+        <div class="card-body">
+          <div e:if={state.sentNumber} class="contact-done stack is-md">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/></svg>
+            <h2>Thanks, {state.form.name.split(" ")[0]}. We're on it.</h2>
+            <p>Your request is ticket <strong>#{state.sentNumber}</strong>. We sent a confirmation to {state.form.email}, and our reply will arrive there too.</p>
+            <div><button onclick={() => onAnother(state)}>Send another request</button></div>
+          </div>
+
+          <form e:else class="is-grid" onsubmit={() => onSubmit(state)}>
+            <div class="field">
+              <label for="name">Your name</label>
+              <input id="name" name="name" autocomplete="name" value={state.form.name} class={[state.errors.name && "is-error"]} required>
+              <p e:if={state.errors.name} class="error">{state.errors.name?.[0]}</p>
+            </div>
+
+            <div class="field">
+              <label for="email">Email</label>
+              <input id="email" name="email" type="email" autocomplete="email" autocapitalize="none" spellcheck={false} value={state.form.email} class={[state.errors.email && "is-error"]} required>
+              <p e:if={state.errors.email} class="error">{state.errors.email?.[0]}</p>
+            </div>
+
+            <div class="field is-full">
+              <label for="subject">Subject</label>
+              <input id="subject" name="subject" maxlength={200} value={state.form.subject} class={[state.errors.subject && "is-error"]} placeholder="Invoices are not sending" required>
+              <p e:if={state.errors.subject} class="error">{state.errors.subject?.[0]}</p>
+            </div>
+
+            <div class="field is-full">
+              <label for="message">How can we help?</label>
+              <textarea id="message" name="message" rows={7} value={state.form.message} class={[state.errors.message && "is-error"]} placeholder="What happened, what you expected, and anything you already tried." required></textarea>
+              <p e:if={state.errors.message} class="error">{state.errors.message?.[0]}</p>
+            </div>
+
+            <div class="field is-full">
+              <button type="submit" class={["is-primary", state.busy && "is-loading"]} disabled={state.busy}>Send to support</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

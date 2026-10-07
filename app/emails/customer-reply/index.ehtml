@@ -1,0 +1,24 @@
+import "./style.css";
+
+/**
+ * An agent's reply, sent to the customer.
+ *
+ * @email
+ */
+<html (
+  agentName: string,
+  body: string,
+  ticketNumber: number,
+  subject: string,
+)>
+  <body class="email customer-reply">
+    <div class="email-wrap">
+      <p e:for={para of body.split(/\n{2,}/)}>{para}</p>
+
+      <div class="email-footer">
+        <p class="ref">{agentName}, support team · Ticket #{ticketNumber}: {subject}</p>
+        <p class="ref">Reply to this email to add to the conversation.</p>
+      </div>
+    </div>
+  </body>
+</html>

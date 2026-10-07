@@ -1,0 +1,6 @@
+@import "#app/shared/styles/email.css";
+
+.email.customer-reply .ref {
+  color: #5b6472;
+  font-size: 13px;
+}

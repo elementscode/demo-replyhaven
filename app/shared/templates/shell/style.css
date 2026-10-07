@@ -1,0 +1,129 @@
+@import "#app/shared/templates/brand/style.css";
+@import "#app/shared/styles/ui.css";
+
+.shell {
+  --sidebar-width: 15rem;
+}
+
+.shell-side {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding: var(--space-5) var(--space-4);
+  border-right: 1px solid var(--rule);
+  background: var(--bg-soft);
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+}
+
+.shell-nav {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.shell-nav a {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2-5);
+  padding: var(--space-2) var(--space-2-5);
+  border-radius: var(--radius-md);
+  color: var(--ink-soft);
+  text-decoration: none;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+.shell-nav a:hover {
+  background: var(--bg-muted);
+  color: var(--ink);
+}
+
+.shell-nav a.is-active {
+  background: var(--bg-elevated);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+
+.shell-nav svg {
+  flex: none;
+  color: var(--ink-dim);
+}
+
+.shell-nav a.is-active svg {
+  color: var(--accent);
+}
+
+.shell-me {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--rule);
+  font-size: var(--text-sm);
+}
+
+.shell-me-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.shell-me-text span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shell-me-text small {
+  color: var(--ink-dim);
+}
+
+.shell-main {
+  min-width: 0;
+}
+
+
+@media (max-width: 48rem) {
+  .shell-side {
+    position: static;
+    height: auto;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border-right: 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .shell-side > nav {
+    order: 3;
+    flex-basis: 100%;
+    min-width: 0;
+  }
+
+  .shell-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+  }
+
+  .shell-nav a {
+    white-space: nowrap;
+  }
+
+  .shell-me {
+    margin: 0 0 0 auto;
+    padding: 0;
+    border: 0;
+  }
+
+  .shell-me-text {
+    display: none;
+  }
+}

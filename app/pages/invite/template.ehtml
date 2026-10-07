@@ -1,0 +1,111 @@
+import "./style.css";
+import { AuthError, ValidationError, redirect, sql } from "@elements/app";
+import { Brand } from "#app/shared/templates/brand";
+import { User, loginAs } from "#app/shared/services/auth";
+import favicon from "#app/shared/assets/favicons/favicon.svg";
+
+const MIN_PASSWORD = 8;
+
+interface AcceptForm {
+  name: string;
+  password: string;
+  error: string;
+  busy: boolean;
+}
+
+/** @rpc */
+export function acceptInvite(token: string, name: string, password: string) {
+  if (!name.trim()) {
+    throw new ValidationError("Enter the name teammates will see.");
+  }
+
+  if (password.length < MIN_PASSWORD) {
+    throw new ValidationError(`Use at least ${MIN_PASSWORD} characters for the password.`);
+  }
+
+  let user = sql<User>(`
+    update users
+    set
+      name = ${name.trim()},
+      passwordHash = crypt(${password}, genSalt('bf', 12)),
+      inviteToken = null,
+      acceptedAt = now()
+    where
+      inviteToken = ${token}
+      and passwordHash is null
+    returning
+      id,
+      email,
+      name,
+      role
+  `).firstOrThrow(new AuthError("This invite has already been used or was revoked."));
+
+  loginAs(user);
+}
+
+function onSubmit(token: string, form: AcceptForm) {
+  form.busy = true;
+
+  try {
+    acceptInvite(token, form.name, form.password);
+    redirect("/");
+  } catch (err: any) {
+    form.error = err.message;
+    form.busy = false;
+  }
+}
+
+<html lang="en" class="page-invite" (
+  token: string,
+  email: string,
+  name: string,
+  valid: boolean,
+  private form: AcceptForm = {
+    name,
+    password: "",
+    error: "",
+    busy: false,
+  },
+)>
+  <head>
+    <title>Join the team · replyhaven</title>
+    <meta name="description" content="Accept your replyhaven invite.">
+    <link rel="icon" type="image/svg+xml" href={favicon} />
+  </head>
+  <body>
+    <main class="invite-main">
+      <div class="card invite-card">
+        <div class="card-body">
+          <form e:if={valid} class="stack is-lg" onsubmit={() => onSubmit(token, form)}>
+            <div class="stack is-sm">
+              <Brand />
+              <h1>Join the support team</h1>
+              <p>Set up the account for {email}.</p>
+            </div>
+
+            <p e:if={form.error} class="error" role="alert">{form.error}</p>
+
+            <div class="field">
+              <label for="name">Your name</label>
+              <input id="name" autocomplete="name" value={form.name} required>
+            </div>
+
+            <div class="field">
+              <label for="password">Password</label>
+              <input id="password" type="password" autocomplete="new-password" minlength={MIN_PASSWORD} value={form.password} required>
+              <p class="hint">At least {MIN_PASSWORD} characters.</p>
+            </div>
+
+            <button type="submit" class={["is-primary is-block", form.busy && "is-loading"]} disabled={form.busy}>Create account</button>
+          </form>
+
+          <div e:else class="stack is-md">
+            <Brand />
+            <h1>This invite has expired</h1>
+            <p>It was already used or the admin revoked it. Ask the admin for a new one, or <a href="/signin">sign in</a>.</p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

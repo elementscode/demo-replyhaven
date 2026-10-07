@@ -1,0 +1,57 @@
+@import "#app/shared/styles/page.css";
+
+.canned {
+  padding: var(--space-8) var(--space-8) var(--space-12);
+  max-width: 56rem;
+}
+
+.canned-head h1 {
+  margin: 0;
+  font-size: var(--text-2xl);
+}
+
+.canned-head p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--text-sm);
+}
+
+.canned-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.canned-item h2 {
+  margin: 0;
+  font-size: var(--text-md);
+}
+
+.canned-body {
+  margin: 0;
+  white-space: pre-wrap;
+  color: var(--ink-soft);
+  font-size: var(--text-sm);
+}
+
+.canned-item .card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.canned-item .card-head > .cluster {
+  flex: none;
+  flex-wrap: nowrap;
+}
+
+.canned textarea {
+  min-height: 9rem;
+}
+
+@media (max-width: 48rem) {
+  .canned {
+    padding: var(--space-5) var(--space-4) var(--space-10);
+  }
+}

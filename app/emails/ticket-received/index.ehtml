@@ -1,0 +1,26 @@
+import "./style.css";
+
+/**
+ * Confirms a contact form submission to the customer.
+ *
+ * @email
+ */
+<html (
+  customerName: string,
+  ticketNumber: number,
+  subject: string,
+  body: string,
+)>
+  <body class="email ticket-received">
+    <div class="email-wrap">
+      <h1>We got your message</h1>
+      <p>Hi {customerName}, thanks for writing in. Your request is ticket #{ticketNumber}, and someone from the support team will reply to this address.</p>
+      <p><strong>{subject}</strong></p>
+      <blockquote>{body}</blockquote>
+
+      <div class="email-footer">
+        <p>replyhaven support · Reply to this email to add details.</p>
+      </div>
+    </div>
+  </body>
+</html>

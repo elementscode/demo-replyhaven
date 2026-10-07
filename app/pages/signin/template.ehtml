@@ -1,0 +1,122 @@
+import "./style.css";
+import { redirect } from "@elements/app";
+import { signin } from "#app/shared/services/auth";
+import { initials } from "#app/shared/lib/sla";
+import { Brand } from "#app/shared/templates/brand";
+import favicon from "#app/shared/assets/favicons/favicon.svg";
+
+export interface DemoLogin {
+  name: string;
+  email: string;
+  role: "admin" | "agent";
+}
+
+interface SigninForm {
+  email: string;
+  password: string;
+  error: string;
+  busy: boolean;
+}
+
+function onSubmit(form: SigninForm) {
+  form.busy = true;
+
+  try {
+    signin(form.email, form.password);
+    form.error = "";
+    redirect("/");
+  } catch (err: any) {
+    form.error = err.message;
+    form.busy = false;
+  }
+}
+
+function useDemo(form: SigninForm, login: DemoLogin, password: string) {
+  form.email = login.email;
+  form.password = password;
+  onSubmit(form);
+}
+
+<html lang="en" class="page-signin" (
+  demoLogins: DemoLogin[],
+  demoPassword: string,
+  private form: SigninForm = {
+    email: "",
+    password: "",
+    error: "",
+    busy: false,
+  },
+)>
+  <head>
+    <title>Sign in · replyhaven</title>
+    <meta name="description" content="Sign in to the replyhaven help desk.">
+    <link rel="icon" type="image/svg+xml" href={favicon} />
+  </head>
+  <body>
+    <main class="signin-main">
+      <div class="signin-panel">
+        <div class="card">
+          <div class="card-body">
+            <form class="stack is-lg" onsubmit={() => onSubmit(form)}>
+              <div class="stack is-sm signin-head">
+                <Brand />
+                <h1>Sign in to the help desk</h1>
+                <p>For the support team. Customers write in through the contact form.</p>
+              </div>
+
+              <p e:if={form.error} class="error" role="alert">{form.error}</p>
+
+              <div class="field">
+                <label for="email">Email</label>
+                <input id="email"
+                       name="email"
+                       type="email"
+                       value={form.email}
+                       autocomplete="email"
+                       autocapitalize="none"
+                       spellcheck={false}
+                       placeholder="you@replyhaven.dev"
+                       required>
+              </div>
+
+              <div class="field">
+                <label for="password">Password</label>
+                <input id="password"
+                       name="password"
+                       type="password"
+                       value={form.password}
+                       autocomplete="current-password"
+                       required>
+              </div>
+
+              <button type="submit" class={["is-primary is-block", form.busy && "is-loading"]} disabled={form.busy}>Sign in</button>
+
+              <p class="signin-foot">Need help as a customer? <a href="/contact">Contact support</a></p>
+            </form>
+          </div>
+        </div>
+
+        <div class="card" e:if={demoLogins.length > 0}>
+          <div class="card-head">
+            <h2 class="text-md">Seeded logins</h2>
+          </div>
+          <div class="card-body stack">
+            <p class="hint">Every account uses the password <code>{demoPassword}</code>. Pick one to sign in.</p>
+            <ul class="demo-logins stack is-sm">
+              <li e:for={login of demoLogins}>
+                <button type="button" class="demo-login" disabled={form.busy} onclick={() => useDemo(form, login, demoPassword)}>
+                  <span class="avatar">{initials(login.name)}</span>
+                  <span class="demo-login-text">
+                    <span>{login.name}</span>
+                    <small>{login.email}</small>
+                  </span>
+                  <span class={["pill", login.role === "admin" && "is-accent"]}>{login.role}</span>
+                </button>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

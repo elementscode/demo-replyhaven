@@ -1,0 +1,106 @@
+import "./style.css";
+import { LiveView } from "@elements/app";
+import { Shell, ShellUser } from "#app/shared/templates/shell";
+import { CannedReply } from "#app/shared/services/canned";
+import favicon from "#app/shared/assets/favicons/favicon.svg";
+
+interface Editor {
+  id: string;
+  title: string;
+  body: string;
+  error: string;
+}
+
+function blank(): Editor {
+  return { id: "", title: "", body: "", error: "" };
+}
+
+function onSave(replies: LiveView<CannedReply>, editor: Editor) {
+  if (!editor.title.trim() || !editor.body.trim()) {
+    editor.error = "Give the reply a title and a body.";
+    return;
+  }
+
+  let fields = { title: editor.title.trim(), body: editor.body.trim() };
+
+  try {
+    if (editor.id) {
+      let existing = replies.get(editor.id)!;
+      replies.update({ ...existing, ...fields }, () => Object.assign(editor, blank()));
+    } else {
+      replies.insert({ ...fields, createdAt: new Date() }, () => Object.assign(editor, blank()));
+    }
+  } catch (err: any) {
+    editor.error = err.message;
+  }
+}
+
+function onEdit(editor: Editor, reply: CannedReply) {
+  Object.assign(editor, { id: reply.id, title: reply.title, body: reply.body, error: "" });
+  scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function onDelete(replies: LiveView<CannedReply>, reply: CannedReply) {
+  if (confirm(`Delete "${reply.title}"?`)) {
+    replies.delete(reply);
+  }
+}
+
+<html lang="en" class="page-canned" (
+  me: ShellUser,
+  replies: LiveView<CannedReply>,
+  private editor: Editor = blank(),
+)>
+  <head>
+    <title>Canned replies · replyhaven</title>
+    <meta name="description" content="Saved replies agents insert into tickets.">
+    <link rel="icon" type="image/svg+xml" href={favicon} />
+  </head>
+  <body>
+    <Shell me={me} active="canned">
+      <main class="canned stack is-lg">
+        <div class="canned-head stack is-xs">
+          <h1>Canned replies</h1>
+          <p e:if={me.role === "admin"}>Saved answers agents insert from the reply box. <code>{"{{first_name}}"}</code> becomes the customer's first name and <code>{"{{agent}}"}</code> the agent's.</p>
+          <p e:else>Insert these from the reply box on any ticket. The admin manages this list.</p>
+        </div>
+
+        <form e:if={me.role === "admin"} class="card" onsubmit={() => onSave(replies, editor)}>
+          <div class="card-head">
+            <h2 class="text-md">{editor.id ? "Edit reply" : "New canned reply"}</h2>
+          </div>
+          <div class="card-body stack">
+            <p e:if={editor.error} class="error" role="alert">{editor.error}</p>
+            <div class="field">
+              <label for="title">Title</label>
+              <input id="title" value={editor.title} placeholder="Refund issued">
+            </div>
+            <div class="field">
+              <label for="body">Reply</label>
+              <textarea id="body" value={editor.body} placeholder={"Hi {{first_name}},\n\n…"}></textarea>
+            </div>
+          </div>
+          <div class="card-foot">
+            <button e:if={editor.id} type="button" class="is-ghost" onclick={() => Object.assign(editor, blank())}>Cancel</button>
+            <button type="submit" class="is-primary">{editor.id ? "Save changes" : "Add reply"}</button>
+          </div>
+        </form>
+
+        <ul class="canned-list stack">
+          <li e:for={r of replies.sort((a, b) => a.title.localeCompare(b.title))} class="card canned-item">
+            <div class="card-head">
+              <h2>{r.title}</h2>
+              <div e:if={me.role === "admin"} class="cluster is-xs">
+                <button class="is-ghost is-sm" onclick={() => onEdit(editor, r)}>Edit</button>
+                <button class="is-sm" onclick={() => onDelete(replies, r)}>Delete</button>
+              </div>
+            </div>
+            <div class="card-body">
+              <p class="canned-body">{r.body}</p>
+            </div>
+          </li>
+        </ul>
+      </main>
+    </Shell>
+  </body>
+</html>
