@@ -1,30 +1,16 @@
-![Replyhaven, a help desk for a software company's support team built with Elements: the shared ticket queue sorted by priority, with overdue badges, status pills, assignees, and the agents viewing each ticket.](https://elements.dev/demos/01a1140a-7e05-7a74-87f2-ca8732597a3f/poster?v=d027e8da369b)
+![A help desk with a live ticket queue, built by Claude Code on Elements: the shared ticket queue sorted by priority, with overdue badges, status pills, assignees, and the agents viewing each ticket.](https://elements.dev/demos/01a1140a-7e05-7a74-87f2-ca8732597a3f/poster?v=d027e8da369b)
 
-# Replyhaven
+# A help desk with a live ticket queue, built by Claude Code on Elements
 
-> A demo app built with [Elements](https://elements.dev).
+> Replyhaven is a full-stack app built with Claude Code on Elements.
 
 A live ticket queue with overdue badges, email replies, internal notes, canned replies, and who is viewing or typing on each ticket.
 
-**Demo:** [Replyhaven](https://elements.dev/demos/01a1140a-7e05-7a74-87f2-ca8732597a3f)
-
-## Agent specs
-
-- **Agent:** Claude Code, Opus 5.5 Medium
-- **Time:** 16 min
-- **Cost:** $6.19 at API rates, October 2026
-
-## Get started
-
-```bash
-elements create replyhaven -scaffold=elementscode/demo-replyhaven
-```
+[Run this app on your machine](https://elements.dev/demos/01a1140a-7e05-7a74-87f2-ca8732597a3f). Use this demo as inspiration, or as the starting point for your own app. Your agent creates a new app with this one as the scaffold, and you prompt it to add whatever features you want.
 
 ## How it's built
 
 Replyhaven needed a shared queue that reorders itself as tickets arrive, conversations that stay current in every open window, email both ways with customers, and a way for agents to see who else is on a ticket. Each of those is a part of Elements, so the agent spent its 16 minutes on the help desk itself.
-
-### What Elements gave the app
 
 - **A live queue and conversations.** Tickets, messages and canned replies are LiveTables. A database trigger announces every change, so a new ticket from the contact form lands in each agent's queue, sorted by priority then age, and a reply appears in every open copy of the ticket.
 
@@ -38,30 +24,6 @@ Replyhaven needed a shared queue that reorders itself as tickets arrive, convers
 
 - **Sessions and roles.** The admin invites agents by email and manages canned replies, and every server call checks the signed-in role with one shared guard. Migrations define the schema and seed one admin, three agents and 20 tickets with their conversations.
 
-### What the project server gave the agent
+## Why Elements
 
-The project server runs alongside the agent and answers as soon as a file is saved: it type-checks the templates, TypeScript and SQL, applies migrations and reruns the tests, so every question came back right away and the agent kept building.
-
-### What shipped
-
-The app type-checks with zero errors and all 20 tests pass. Every page works on desktop and phone, and the queue, conversations and who is viewing update live across tabs.
-
-## Demo accounts
-
-The seed creates 20 tickets across every status and priority, each with a
-conversation, plus five canned replies, and four accounts. Every account's
-password is `replyhaven`, and the sign-in page lists them. Customers write in
-at `/contact`.
-
-| Email                  | Role  |
-| ---------------------- | ----- |
-| maya@replyhaven.dev    | admin |
-| sam@replyhaven.dev     | agent |
-| priya@replyhaven.dev   | agent |
-| leo@replyhaven.dev     | agent |
-
-**Demo:** [Replyhaven](https://elements.dev/demos/01a1140a-7e05-7a74-87f2-ca8732597a3f)
-
-## License
-
-MIT. See [LICENSE](LICENSE).
+Elements is an integrated full-stack app framework and a project server. The project server checks the agent's work as it builds: it type-checks the server and browser code, analyzes the program, applies migrations and runs the tests, then reports the results to the agent. A security mistake, such as calling a server-only function from the browser, is a compile error. The agent reads the report and fixes its own mistakes before it tells you a feature is done. The same checks run on every feature you ask for next.
