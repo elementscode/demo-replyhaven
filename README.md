@@ -6,6 +6,8 @@
 
 A live ticket queue with overdue badges, email replies, internal notes, canned replies, and who is viewing or typing on each ticket.
 
+Replyhaven uses the `dashboard` theme from @elements/ui.
+
 [Run this app on your machine](https://elements.dev/demos/01a1140a-7e05-7a74-87f2-ca8732597a3f). Use this demo as inspiration, or as the starting point for your own app. Your agent creates a new app with this one as the scaffold, and you prompt it to add whatever features you want.
 
 ## How it's built
