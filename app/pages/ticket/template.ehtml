@@ -205,7 +205,7 @@ function kindLabel(m: Message): string {
   </head>
   <body>
     <Shell me={me} active="queue">
-      <main class="ticket-page stack is-lg">
+      <div class="ticket-page stack is-lg">
         <div class="stack is-sm">
           <a class="ticket-back" href="/">← Back to queue</a>
           <h1 class="ticket-title"><span class="ticket-number">#{current(ticket).number}</span>{current(ticket).subject}</h1>
@@ -337,7 +337,7 @@ function kindLabel(m: Message): string {
             </div>
           </aside>
         </div>
-      </main>
+      </div>
     </Shell>
   </body>
 </html>

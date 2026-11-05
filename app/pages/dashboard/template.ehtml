@@ -71,7 +71,7 @@ function share(value: number | null): string {
   </head>
   <body>
     <Shell me={me} active="dashboard">
-      <main class="dash stack is-lg">
+      <div class="dash stack is-lg">
         <div class="dash-head stack is-xs">
           <h1>Dashboard</h1>
           <p>Live from the queue. First reply times cover tickets opened in the last 30 days.</p>
@@ -184,7 +184,7 @@ function share(value: number | null): string {
             </table>
           </div>
         </section>
-      </main>
+      </div>
     </Shell>
   </body>
 </html>

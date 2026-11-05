@@ -58,7 +58,7 @@ function onDelete(replies: LiveView<CannedReply>, reply: CannedReply) {
   </head>
   <body>
     <Shell me={me} active="canned">
-      <main class="canned stack is-lg">
+      <div class="canned stack is-lg">
         <div class="canned-head stack is-xs">
           <h1>Canned replies</h1>
           <p e:if={me.role === "admin"}>Saved answers agents insert from the reply box. <code>{"{{first_name}}"}</code> becomes the customer's first name and <code>{"{{agent}}"}</code> the agent's.</p>
@@ -100,7 +100,7 @@ function onDelete(replies: LiveView<CannedReply>, reply: CannedReply) {
             </div>
           </li>
         </ul>
-      </main>
+      </div>
     </Shell>
   </body>
 </html>

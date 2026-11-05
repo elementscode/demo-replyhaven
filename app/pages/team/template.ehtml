@@ -54,7 +54,7 @@ function onRevoke(member: TeamMember, list: { members: TeamMember[] }) {
   </head>
   <body>
     <Shell me={me} active="team">
-      <main class="team stack is-lg">
+      <div class="team stack is-lg">
         <div class="team-head stack is-xs">
           <h1>Team</h1>
           <p>Invite agents by email. They pick their name and password from the link.</p>
@@ -113,7 +113,7 @@ function onRevoke(member: TeamMember, list: { members: TeamMember[] }) {
             </tbody>
           </table>
         </div>
-      </main>
+      </div>
     </Shell>
   </body>
 </html>

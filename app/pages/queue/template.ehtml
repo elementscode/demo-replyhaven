@@ -102,7 +102,7 @@ function statusIntent(status: string): string {
   </head>
   <body>
     <Shell me={me} active="queue">
-      <main class="queue stack is-lg">
+      <div class="queue stack is-lg">
         <div class="queue-head row justify-between">
           <div class="stack is-xs">
             <h1>{VIEWS.find((v) => v.key === view.value)?.label}</h1>
@@ -167,7 +167,7 @@ function statusIntent(status: string): string {
         <div e:else class="card queue-empty">
           <p>{VIEWS.find((v) => v.key === view.value)?.empty}</p>
         </div>
-      </main>
+      </div>
     </Shell>
   </body>
 </html>
