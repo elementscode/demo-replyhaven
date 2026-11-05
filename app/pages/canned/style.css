@@ -22,11 +22,6 @@
   padding: 0;
 }
 
-.canned-item h2 {
-  margin: 0;
-  font-size: var(--text-md);
-}
-
 .canned-body {
   margin: 0;
   white-space: pre-wrap;
@@ -34,20 +29,8 @@
   font-size: var(--text-sm);
 }
 
-.canned-item .card-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-}
-
-.canned-item .card-head > .cluster {
-  flex: none;
+.canned-item .card-action > .cluster {
   flex-wrap: nowrap;
-}
-
-.canned textarea {
-  min-height: 9rem;
 }
 
 @media (max-width: 48rem) {
