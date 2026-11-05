@@ -119,11 +119,7 @@
   padding: var(--space-4);
 }
 
-.composer textarea {
-  min-height: 8rem;
-}
-
-.composer.is-note textarea {
+.composer.is-note .textarea {
   background: var(--warning-soft);
 }
 
@@ -134,53 +130,15 @@
   gap: var(--space-3);
 }
 
-.composer-foot select {
-  width: auto;
-  max-width: 16rem;
-}
-
 .composer-foot .hint {
   margin: 0;
   flex: 1;
   min-width: 10rem;
 }
 
-.side .card-body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-
 .side h2 {
   margin: 0;
   font-size: var(--text-sm);
-}
-
-.tags-edit {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1-5);
-}
-
-.tag-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  padding: 0 var(--space-1) 0 var(--space-2);
-  border-radius: var(--radius-sm);
-  background: var(--bg-muted);
-  font-size: var(--text-xs);
-  color: var(--ink-soft);
-  line-height: 1.6rem;
-}
-
-.tag-chip button {
-  height: 1.25rem;
-  min-width: 1.25rem;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--ink-dim);
 }
 
 .facts {

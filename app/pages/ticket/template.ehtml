@@ -1,5 +1,15 @@
 import "./style.css";
 import { LiveView, type Listener } from "@elements/app";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@elements/ui/tabs";
+import { Badge, type BadgeVariant } from "@elements/ui/badge";
+import { Avatar, AvatarGroup } from "@elements/ui/avatar";
+import { Alert } from "@elements/ui/alert";
+import { Button } from "@elements/ui/button";
+import { Card, CardContent } from "@elements/ui/card";
+import { Field } from "@elements/ui/field";
+import { NativeSelect } from "@elements/ui/native-select";
+import { TagsInput } from "@elements/ui/tags-input";
+import { Textarea } from "@elements/ui/textarea";
 import { Shell, ShellUser } from "#app/shared/templates/shell";
 import { CannedReply } from "#app/shared/services/canned";
 import { Agent, Message, Ticket, TypingPing, Viewer, notifyTyping, viewersOf } from "#app/shared/services/tickets";
@@ -10,7 +20,7 @@ interface Draft {
   mode: "reply" | "note";
   body: string;
   error: string;
-  tag: string;
+  canned: string;
 }
 
 interface Typer {
@@ -106,10 +116,9 @@ function viewingLine(viewers: Viewer[]): string {
     : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]} are also viewing`;
 }
 
-function onCannedPick(event: Event, canned: LiveView<CannedReply>, ticket: Ticket, me: ShellUser, draft: Draft) {
-  let select = event.target as HTMLSelectElement;
-  let reply = canned.find((c) => c.id === select.value);
-  select.value = "";
+function onCannedPick(canned: LiveView<CannedReply>, ticket: Ticket, me: ShellUser, draft: Draft) {
+  let reply = canned.find((c) => c.id === draft.canned);
+  draft.canned = "";
 
   if (!reply) {
     return;
@@ -127,37 +136,29 @@ function onFieldChange(view: LiveView<Ticket>, field: "status" | "priority" | "a
   view.update({ ...t, [field]: field === "assigneeId" ? (value || null) : value });
 }
 
-function onAddTag(view: LiveView<Ticket>, draft: Draft) {
-  let tag = draft.tag.trim().toLowerCase().replace(/\s+/g, "-");
-  let t = current(view);
-  draft.tag = "";
-
-  if (!tag || t.tags.includes(tag)) {
-    return;
-  }
-
-  view.update({ ...t, tags: [...t.tags, tag] });
+function cleanTag(tag: string): string {
+  return tag.trim().toLowerCase().replace(/\s+/g, "-");
 }
 
-function onRemoveTag(view: LiveView<Ticket>, tag: string) {
+function onTagsChange(view: LiveView<Ticket>, tags: string[]) {
   let t = current(view);
 
-  view.update({ ...t, tags: t.tags.filter((x) => x !== tag) });
+  view.update({ ...t, tags: [...new Set(tags.filter((x) => x))] });
 }
 
-function statusIntent(status: string): string {
+function statusVariant(status: string): BadgeVariant {
   switch (status) {
     case "new":
-      return "is-info";
+      return "info";
 
     case "open":
-      return "is-accent";
+      return "accent";
 
     case "pending":
-      return "is-warning";
+      return "warning";
 
     default:
-      return "is-success";
+      return "success";
   }
 }
 
@@ -191,7 +192,7 @@ function kindLabel(m: Message): string {
     mode: "reply",
     body: "",
     error: "",
-    tag: "",
+    canned: "",
   },
 ) oninit={() => {
   presence.on("notify", () => watching.list = viewersOf(ticketId));
@@ -210,18 +211,17 @@ function kindLabel(m: Message): string {
           <a class="ticket-back" href="/">← Back to queue</a>
           <h1 class="ticket-title"><span class="ticket-number">#{current(ticket).number}</span>{current(ticket).subject}</h1>
           <div class="cluster is-sm">
-            <span class={["pill", statusIntent(current(ticket).status)]}>{current(ticket).status}</span>
+            <Badge variant={statusVariant(current(ticket).status)}>{current(ticket).status}</Badge>
             <span class={["prio", `is-${current(ticket).priority}`]}>{current(ticket).priority}</span>
-            <span e:if={isOverdue(current(ticket), now.value)} class="pill is-danger">
-              <span class="pill-dot"></span>
+            <Badge e:if={isOverdue(current(ticket), now.value)} variant="danger" dot>
               Overdue {duration(+now.value - +firstReplyDueAt(current(ticket)))}
-            </span>
-            <span e:elseif={dueLabel(current(ticket), now.value)} class="pill">First reply {dueLabel(current(ticket), now.value)}</span>
+            </Badge>
+            <Badge e:elseif={dueLabel(current(ticket), now.value)} variant="outline">First reply {dueLabel(current(ticket), now.value)}</Badge>
           </div>
           <div class="ticket-presence row is-start gap-2" aria-live="polite">
-            <span e:if={othersViewing(watching.list, me.id).length > 0} class="viewers">
-              <span e:for={v of othersViewing(watching.list, me.id)} class="avatar is-sm" title={v.userName}>{initials(v.userName)}</span>
-            </span>
+            <AvatarGroup e:if={othersViewing(watching.list, me.id).length > 0} label="Also viewing">
+              <Avatar e:for={v of othersViewing(watching.list, me.id)} size="sm" alt={v.userName} fallback={initials(v.userName)} attrs={{ title: v.userName }} />
+            </AvatarGroup>
             <span e:if={othersViewing(watching.list, me.id).length > 0}>{viewingLine(othersViewing(watching.list, me.id))}</span>
           </div>
         </div>
@@ -231,8 +231,7 @@ function kindLabel(m: Message): string {
             <ol class="conversation stack is-md" aria-label="Conversation">
               <li e:for={m of conversation(messages)} class={["msg", `is-${m.kind}`]}>
                 <div class="msg-head">
-                  <span e:if={m.kind === "customer"} class="avatar is-sm is-empty">{initials(m.authorName)}</span>
-                  <span e:else class="avatar is-sm">{initials(m.authorName)}</span>
+                  <Avatar size="sm" alt={m.authorName} fallback={initials(m.authorName)} />
                   <span class="msg-author">{m.authorName}</span>
                   <span class="msg-kind">{kindLabel(m)}</span>
                   <time class="msg-time" datetime={m.createdAt.toISOString()} title={m.createdAt.toLocaleString()}>{ago(m.createdAt, now.value)}</time>
@@ -244,77 +243,75 @@ function kindLabel(m: Message): string {
             <p class="typing" aria-live="polite">{typingLine(typers)}</p>
 
             <form class={["composer", draft.mode === "note" && "is-note"]} onsubmit={() => onSend(messages, ticketId, me, draft)}>
-              <div class="tabs">
-                <div class="tab-list" role="tablist">
-                  <button type="button" role="tab" class={["tab", draft.mode === "reply" && "is-active"]} onclick={() => draft.mode = "reply"}>Reply to customer</button>
-                  <button type="button" role="tab" class={["tab", draft.mode === "note" && "is-active"]} onclick={() => draft.mode = "note"}>Internal note</button>
-                </div>
-              </div>
+              <Tabs value={draft.mode}>
+                <TabsList label="Compose">
+                  <TabsTrigger value="reply">Reply to customer</TabsTrigger>
+                  <TabsTrigger value="note">Internal note</TabsTrigger>
+                </TabsList>
 
-              <div class="composer-body stack">
-                <textarea value={draft.body}
-                          aria-label={draft.mode === "reply" ? "Reply" : "Internal note"}
-                          placeholder={draft.mode === "reply" ? `Write to ${current(ticket).customerName}…` : "Only agents see notes…"}
-                          oninput={() => onType(ticketId, draft)}></textarea>
+                <TabsContent value={draft.mode}>
+                  <div class="composer-body stack">
+                    <Textarea value={draft.body}
+                              rows={5}
+                              attrs={{ "aria-label": draft.mode === "reply" ? "Reply" : "Internal note" }}
+                              placeholder={draft.mode === "reply" ? `Write to ${current(ticket).customerName}…` : "Only agents see notes…"}
+                              oninput={() => onType(ticketId, draft)} />
 
-                <p e:if={draft.error} class="error" role="alert">{draft.error}</p>
+                    <Alert e:if={draft.error} variant="danger" description={draft.error} />
 
-                <div class="composer-foot">
-                  <select aria-label="Insert a canned reply" onchange={(e) => onCannedPick(e, canned, current(ticket), me, draft)}>
-                    <option value="">Insert canned reply…</option>
-                    <option e:for={c of canned.sort((a, b) => a.title.localeCompare(b.title))} value={c.id}>{c.title}</option>
-                  </select>
-                  <p e:if={draft.mode === "reply"} class="hint">Emails {current(ticket).customerEmail}</p>
-                  <p e:else class="hint">Visible to agents only</p>
-                  <button type="submit" class="is-primary">{draft.mode === "reply" ? "Send reply" : "Add note"}</button>
-                </div>
-              </div>
+                    <div class="composer-foot">
+                      <NativeSelect value={draft.canned}
+                                    placeholder="Insert canned reply…"
+                                    attrs={{ "aria-label": "Insert a canned reply" }}
+                                    onchange={() => onCannedPick(canned, current(ticket), me, draft)}>
+                        <option e:for={c of canned.sort((a, b) => a.title.localeCompare(b.title))} value={c.id}>{c.title}</option>
+                      </NativeSelect>
+                      <p e:if={draft.mode === "reply"} class="hint">Emails {current(ticket).customerEmail}</p>
+                      <p e:else class="hint">Visible to agents only</p>
+                      <Button type="submit" variant="primary">{draft.mode === "reply" ? "Send reply" : "Add note"}</Button>
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
             </form>
           </div>
 
           <aside class="side stack is-md">
-            <div class="card">
-              <div class="card-body">
-                <div class="field">
-                  <label for="status">Status</label>
-                  <select id="status" value={current(ticket).status} onchange={(e) => onFieldChange(ticket, "status", e)}>
+            <Card>
+              <CardContent class="stack">
+                <Field label="Status" reserveError={false}>
+                  <NativeSelect block value={current(ticket).status} onchange={(e) => onFieldChange(ticket, "status", e)}>
                     <option e:for={s of STATUSES} value={s}>{s[0].toUpperCase() + s.slice(1)}</option>
-                  </select>
-                </div>
+                  </NativeSelect>
+                </Field>
 
-                <div class="field">
-                  <label for="priority">Priority</label>
-                  <select id="priority" value={current(ticket).priority} onchange={(e) => onFieldChange(ticket, "priority", e)}>
+                <Field label="Priority" reserveError={false}>
+                  <NativeSelect block value={current(ticket).priority} onchange={(e) => onFieldChange(ticket, "priority", e)}>
                     <option e:for={p of PRIORITIES} value={p}>{p[0].toUpperCase() + p.slice(1)}</option>
-                  </select>
-                </div>
+                  </NativeSelect>
+                </Field>
 
-                <div class="field">
-                  <label for="assignee">Assignee</label>
-                  <select id="assignee" value={current(ticket).assigneeId ?? ""} onchange={(e) => onFieldChange(ticket, "assigneeId", e)}>
+                <Field label="Assignee" reserveError={false}>
+                  <NativeSelect block value={current(ticket).assigneeId ?? ""} onchange={(e) => onFieldChange(ticket, "assigneeId", e)}>
                     <option value="">Unassigned</option>
                     <option e:for={a of agents} value={a.id}>{a.id === me.id ? `${a.name} (me)` : a.name}</option>
-                  </select>
-                </div>
+                  </NativeSelect>
+                </Field>
 
-                <div class="field">
-                  <label for="tag">Tags</label>
-                  <div class="tags-edit">
-                    <span e:for={tag of current(ticket).tags} class="tag-chip">
-                      {tag}
-                      <button type="button" aria-label={`Remove tag ${tag}`} onclick={() => onRemoveTag(ticket, tag)}>×</button>
-                    </span>
-                  </div>
-                  <form class="row gap-2" onsubmit={() => onAddTag(ticket, draft)}>
-                    <input id="tag" class="is-sm" value={draft.tag} placeholder="Add a tag">
-                    <button type="submit" class="is-sm">Add</button>
-                  </form>
-                </div>
-              </div>
-            </div>
+                <Field label="Tags" reserveError={false}>
+                  <TagsInput value={current(ticket).tags}
+                             placeholder="Add a tag"
+                             clearable={false}
+                             editable={false}
+                             sanitizeValue={cleanTag}
+                             blurBehavior="add"
+                             onValueChange={(tags) => onTagsChange(ticket, tags)} />
+                </Field>
+              </CardContent>
+            </Card>
 
-            <div class="card">
-              <div class="card-body">
+            <Card>
+              <CardContent class="stack">
                 <h2>Customer</h2>
                 <dl class="facts">
                   <dt>Name</dt>
@@ -333,8 +330,8 @@ function kindLabel(m: Message): string {
                   <dt>Target</dt>
                   <dd>{duration(+firstReplyDueAt(current(ticket)) - +current(ticket).createdAt)}</dd>
                 </dl>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </aside>
         </div>
       </div>
