@@ -1,5 +1,10 @@
 import "./style.css";
 import { LiveView, type Listener } from "@elements/app";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@elements/ui/tabs";
+import { Badge, type BadgeVariant } from "@elements/ui/badge";
+import { Avatar, AvatarGroup } from "@elements/ui/avatar";
+import { Empty } from "@elements/ui/empty";
+import { Icon } from "@elements/ui/icon";
 import { Shell, ShellUser } from "#app/shared/templates/shell";
 import { Agent, Ticket, Viewer, allViewers } from "#app/shared/services/tickets";
 import { ago, byPriorityThenAge, dueLabel, duration, firstReplyDueAt, initials, isOverdue } from "#app/shared/lib/sla";
@@ -60,24 +65,23 @@ function viewersFor(viewers: Viewer[], ticketId: string): Viewer[] {
   return viewers.filter((v) => v.ticketId === ticketId);
 }
 
-function onTabClick(view: { value: string }, key: string) {
-  view.value = key;
+function onViewChange(key: string) {
   history.replaceState(null, "", key === "all" ? "/" : `/?view=${key}`);
 }
 
-function statusIntent(status: string): string {
+function statusVariant(status: string): BadgeVariant {
   switch (status) {
     case "new":
-      return "is-info";
+      return "info";
 
     case "open":
-      return "is-accent";
+      return "accent";
 
     case "pending":
-      return "is-warning";
+      return "warning";
 
     default:
-      return "is-success";
+      return "success";
   }
 }
 
@@ -108,65 +112,63 @@ function statusIntent(status: string): string {
             <h1>{VIEWS.find((v) => v.key === view.value)?.label}</h1>
             <p>Sorted by priority, then oldest first.</p>
           </div>
-          <span e:if={overdueCount(tickets, now.value) > 0} class="pill is-danger">
-            <span class="pill-dot"></span>
+          <Badge e:if={overdueCount(tickets, now.value) > 0} variant="danger" dot>
             {overdueCount(tickets, now.value)} overdue
-          </span>
+          </Badge>
         </div>
 
-        <div class="tabs">
-          <div class="tab-list" role="tablist">
-            <button e:for={v of VIEWS}
-                    role="tab"
-                    aria-selected={view.value === v.key}
-                    class={["tab", view.value === v.key && "is-active"]}
-                    onclick={() => onTabClick(view, v.key)}>
+        <Tabs value={view.value} onValueChange={(key) => onViewChange(key)}>
+          <TabsList label="Queue views">
+            <TabsTrigger e:for={v of VIEWS} value={v.key}>
               {v.label}
-              <span class="tab-count">{count(tickets, v.key, me.id)}</span>
-            </button>
-          </div>
-        </div>
+              <Badge variant="outline">{count(tickets, v.key, me.id)}</Badge>
+            </TabsTrigger>
+          </TabsList>
 
-        <ul class="ticket-list" e:if={count(tickets, view.value, me.id) > 0}>
-          <li e:for={t of rows(tickets, view.value, me.id)}>
-            <a href={`/tickets/${t.number}`} class={["ticket-row", isOverdue(t, now.value) && "is-overdue"]}>
-              <span class={["prio", `is-${t.priority}`]}>{t.priority}</span>
+          <TabsContent value={view.value}>
+            <ul class="ticket-list" e:if={count(tickets, view.value, me.id) > 0}>
+              <li e:for={t of rows(tickets, view.value, me.id)}>
+                <a href={`/tickets/${t.number}`} class={["ticket-row", isOverdue(t, now.value) && "is-overdue"]}>
+                  <span class={["prio", `is-${t.priority}`]}>{t.priority}</span>
 
-              <span class="ticket-main">
-                <span class="ticket-subject"><span class="ticket-number">#{t.number}</span>{t.subject}</span>
-                <span class="ticket-meta">
-                  <span>{t.customerName}</span>
-                  <span aria-hidden="true">·</span>
-                  <span>opened {ago(t.createdAt, now.value)}</span>
-                  <span e:for={tag of t.tags} class="tag">{tag}</span>
-                </span>
-              </span>
+                  <span class="ticket-main">
+                    <span class="ticket-subject"><span class="ticket-number">#{t.number}</span>{t.subject}</span>
+                    <span class="ticket-meta">
+                      <span>{t.customerName}</span>
+                      <span aria-hidden="true">·</span>
+                      <span>opened {ago(t.createdAt, now.value)}</span>
+                      <span e:for={tag of t.tags} class="tag">{tag}</span>
+                    </span>
+                  </span>
 
-              <span class="ticket-flags">
-                <span e:if={viewersFor(watching.list, t.id).length > 0}
-                      class="viewers"
-                      title={`${viewersFor(watching.list, t.id).map((v) => v.userName).join(", ")} viewing`}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
-                  <span e:for={v of viewersFor(watching.list, t.id)} class="avatar is-sm">{initials(v.userName)}</span>
-                </span>
-                <span e:if={isOverdue(t, now.value)} class="pill is-danger" title={`First reply was due ${ago(firstReplyDueAt(t), now.value)}`}>
-                  <span class="pill-dot"></span>
-                  Overdue {duration(+now.value - +firstReplyDueAt(t))}
-                </span>
-                <span e:elseif={dueLabel(t, now.value)} class="due">{dueLabel(t, now.value)}</span>
-              </span>
+                  <span class="ticket-flags">
+                    <span e:if={viewersFor(watching.list, t.id).length > 0}
+                          class="viewers"
+                          title={`${viewersFor(watching.list, t.id).map((v) => v.userName).join(", ")} viewing`}>
+                      <Icon name="eye" />
+                      <AvatarGroup label="Viewing">
+                        <Avatar e:for={v of viewersFor(watching.list, t.id)} size="sm" alt={v.userName} fallback={initials(v.userName)} />
+                      </AvatarGroup>
+                    </span>
+                    <Badge e:if={isOverdue(t, now.value)} variant="danger" dot attrs={{ title: `First reply was due ${ago(firstReplyDueAt(t), now.value)}` }}>
+                      Overdue {duration(+now.value - +firstReplyDueAt(t))}
+                    </Badge>
+                    <span e:elseif={dueLabel(t, now.value)} class="due">{dueLabel(t, now.value)}</span>
+                  </span>
 
-              <span class={["pill ticket-status", statusIntent(t.status)]}>{t.status}</span>
+                  <Badge variant={statusVariant(t.status)} class="ticket-status">{t.status}</Badge>
 
-              <span e:if={t.assigneeId} class="avatar" title={agentName(agents, t.assigneeId)}>{initials(agentName(agents, t.assigneeId))}</span>
-              <span e:else class="avatar is-empty" title="Unassigned">?</span>
-            </a>
-          </li>
-        </ul>
+                  <Avatar e:if={t.assigneeId} alt={agentName(agents, t.assigneeId)} fallback={initials(agentName(agents, t.assigneeId))} attrs={{ title: agentName(agents, t.assigneeId) }} />
+                  <Avatar e:else alt="Unassigned" fallback="?" attrs={{ title: "Unassigned" }} />
+                </a>
+              </li>
+            </ul>
 
-        <div e:else class="card queue-empty">
-          <p>{VIEWS.find((v) => v.key === view.value)?.empty}</p>
-        </div>
+            <Empty e:else variant="outline" description={VIEWS.find((v) => v.key === view.value)?.empty ?? ""}>
+              <Icon slot="icon" name="inbox" />
+            </Empty>
+          </TabsContent>
+        </Tabs>
       </div>
     </Shell>
   </body>

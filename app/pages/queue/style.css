@@ -16,32 +16,8 @@
   font-size: var(--text-sm);
 }
 
-.queue .tab-list {
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.queue .tab {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1-5);
-  white-space: nowrap;
-}
-
-.tab-count {
-  min-width: 1.4rem;
-  padding: 0 var(--space-1-5);
-  border-radius: var(--radius-full);
-  background: var(--bg-muted);
-  color: var(--ink-soft);
-  font-size: var(--text-xs);
-  font-variant-numeric: tabular-nums;
-  text-align: center;
-}
-
-.tab.is-active .tab-count {
-  background: var(--accent-soft);
-  color: var(--accent-deep);
+.queue .tab-panel {
+  padding-top: var(--space-6);
 }
 
 .ticket-list {
@@ -128,12 +104,6 @@
 
 .ticket-status {
   justify-self: start;
-}
-
-.queue-empty {
-  padding: var(--space-12) var(--space-6);
-  text-align: center;
-  color: var(--ink-soft);
 }
 
 @media (max-width: 48rem) {
