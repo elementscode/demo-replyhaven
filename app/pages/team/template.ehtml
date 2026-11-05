@@ -1,5 +1,14 @@
 import "./style.css";
 import { Shell, ShellUser } from "#app/shared/templates/shell";
+import { AlertDialog, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@elements/ui/alert-dialog";
+import { Alert } from "@elements/ui/alert";
+import { Avatar } from "@elements/ui/avatar";
+import { Badge } from "@elements/ui/badge";
+import { Button } from "@elements/ui/button";
+import { Card, CardContent } from "@elements/ui/card";
+import { Field, FieldLabel } from "@elements/ui/field";
+import { Input } from "@elements/ui/input";
+import { Table, TableHead, TableCell } from "@elements/ui/table";
 import { initials } from "#app/shared/lib/sla";
 import { TeamMember, inviteAgent, revokeInvite } from "./services";
 import favicon from "#app/shared/assets/favicons/favicon.svg";
@@ -29,9 +38,19 @@ function onInvite(form: InviteForm, list: { members: TeamMember[] }) {
   form.busy = false;
 }
 
-function onRevoke(member: TeamMember, list: { members: TeamMember[] }) {
-  if (confirm(`Revoke the invite for ${member.email}?`)) {
-    list.members = revokeInvite(member.id);
+interface Revoking {
+  open: boolean;
+  member: TeamMember | null;
+}
+
+function onAskRevoke(revoking: Revoking, member: TeamMember) {
+  revoking.member = member;
+  revoking.open = true;
+}
+
+function onRevoke(revoking: Revoking, list: { members: TeamMember[] }) {
+  if (revoking.member) {
+    list.members = revokeInvite(revoking.member.id);
   }
 }
 
@@ -39,6 +58,7 @@ function onRevoke(member: TeamMember, list: { members: TeamMember[] }) {
   me: ShellUser,
   members: TeamMember[],
   private list: { members: TeamMember[] } = { members },
+  private revoking: Revoking = { open: false, member: null },
   private form: InviteForm = {
     email: "",
     name: "",
@@ -60,59 +80,69 @@ function onRevoke(member: TeamMember, list: { members: TeamMember[] }) {
           <p>Invite agents by email. They pick their name and password from the link.</p>
         </div>
 
-        <form class="card" onsubmit={() => onInvite(form, list)}>
-          <div class="card-body stack">
-            <div class="invite-form">
-              <div class="field">
-                <label for="invite-email">Email</label>
-                <input id="invite-email" type="email" autocapitalize="none" spellcheck={false} value={form.email} placeholder="new.agent@replyhaven.dev" required>
+        <Card>
+          <CardContent>
+            <form class="stack" onsubmit={() => onInvite(form, list)}>
+              <div class="invite-form">
+                <Field label="Email" reserveError={false}>
+                  <Input type="email" value={form.email} placeholder="new.agent@replyhaven.dev" required attrs={{ autocapitalize: "none", spellcheck: "false" }} />
+                </Field>
+                <Field reserveError={false}>
+                  <FieldLabel>Name <span class="hint">(optional)</span></FieldLabel>
+                  <Input value={form.name} placeholder="Jordan Blake" />
+                </Field>
+                <Button type="submit" variant="primary" loading={form.busy}>Send invite</Button>
               </div>
-              <div class="field">
-                <label for="invite-name">Name <span class="hint">(optional)</span></label>
-                <input id="invite-name" value={form.name} placeholder="Jordan Blake">
-              </div>
-              <button type="submit" class={["is-primary", form.busy && "is-loading"]} disabled={form.busy}>Send invite</button>
-            </div>
-            <p e:if={form.error} class="error" role="alert">{form.error}</p>
-            <div e:if={form.sent} class="callout is-success" role="status">Invite sent to {form.sent}.</div>
-          </div>
-        </form>
+              <Alert e:if={form.error} variant="danger" description={form.error} />
+              <Alert e:if={form.sent} variant="success" role="status" description={`Invite sent to ${form.sent}.`} />
+            </form>
+          </CardContent>
+        </Card>
 
-        <div class="card team-table-wrap">
-          <table class="team-table">
-            <thead>
-              <tr>
-                <th>Person</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th class="num">Open tickets</th>
-                <th><span class="sr-only">Actions</span></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr e:for={m of list.members}>
-                <td>
-                  <div class="team-person">
-                    <span class={["avatar", !m.active && "is-empty"]}>{initials(m.name || m.email)}</span>
-                    <div>
-                      {m.name || "Invited agent"}
-                      <small>{m.email}</small>
+        <Card>
+          <Table label="Team members" class="team-table">
+            <table>
+              <thead>
+                <tr>
+                  <TableHead>Person</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead align="end">Open tickets</TableHead>
+                  <TableHead><span class="sr-only">Actions</span></TableHead>
+                </tr>
+              </thead>
+              <tbody>
+                <tr e:for={m of list.members}>
+                  <TableCell>
+                    <div class="team-person">
+                      <Avatar alt={m.name || m.email} fallback={initials(m.name || m.email)} />
+                      <div>
+                        {m.name || "Invited agent"}
+                        <small>{m.email}</small>
+                      </div>
                     </div>
-                  </div>
-                </td>
-                <td><span class={["pill", m.role === "admin" && "is-accent"]}>{m.role}</span></td>
-                <td>
-                  <span e:if={m.active} class="pill is-success"><span class="pill-dot"></span>Active</span>
-                  <span e:else class="pill is-warning"><span class="pill-dot"></span>Invited</span>
-                </td>
-                <td class="num">{m.openTickets}</td>
-                <td class="num">
-                  <button e:if={!m.active} class="is-sm" onclick={() => onRevoke(m, list)}>Revoke</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+                  </TableCell>
+                  <TableCell><Badge variant={m.role === "admin" ? "accent" : "outline"}>{m.role}</Badge></TableCell>
+                  <TableCell>
+                    <Badge e:if={m.active} variant="success" dot>Active</Badge>
+                    <Badge e:else variant="warning" dot>Invited</Badge>
+                  </TableCell>
+                  <TableCell align="end">{m.openTickets}</TableCell>
+                  <TableCell align="end">
+                    <Button e:if={!m.active} size="sm" onclick={() => onAskRevoke(revoking, m)}>Revoke</Button>
+                  </TableCell>
+                </tr>
+              </tbody>
+            </table>
+          </Table>
+        </Card>
+
+        <AlertDialog open={revoking.open} title={`Revoke the invite for ${revoking.member?.email ?? ""}?`} size="sm">
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction variant="danger" onclick={() => onRevoke(revoking, list)}>Revoke</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialog>
       </div>
     </Shell>
   </body>

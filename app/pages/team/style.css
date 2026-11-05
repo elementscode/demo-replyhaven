@@ -23,16 +23,6 @@
   gap: var(--space-3);
 }
 
-.team-table-wrap {
-  position: relative;
-  min-width: 0;
-  overflow-x: auto;
-}
-
-.team-table td {
-  vertical-align: middle;
-}
-
 .team-person {
   display: flex;
   align-items: center;
@@ -42,11 +32,6 @@
 .team-person small {
   display: block;
   color: var(--ink-dim);
-}
-
-.num {
-  text-align: end;
-  font-variant-numeric: tabular-nums;
 }
 
 @media (max-width: 48rem) {
