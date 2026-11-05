@@ -1,6 +1,11 @@
 import "./style.css";
 import { FieldErrors, ValidationError, email, sql, tx } from "@elements/app";
 import { Brand } from "#app/shared/templates/brand";
+import { Button } from "@elements/ui/button";
+import { Card, CardContent } from "@elements/ui/card";
+import { Field } from "@elements/ui/field";
+import { Input } from "@elements/ui/input";
+import { Textarea } from "@elements/ui/textarea";
 import { isEmail, normalizeEmail } from "#app/shared/services/auth";
 import TicketReceivedEmail from "#app/emails/ticket-received";
 import favicon from "#app/shared/assets/favicons/favicon.svg";
@@ -144,46 +149,38 @@ function onAnother(state: ContactState) {
         <p>Tell us what's going on. We reply by email, usually within a few hours.</p>
       </div>
 
-      <div class="card contact-card">
-        <div class="card-body">
+      <Card class="contact-card">
+        <CardContent>
           <div e:if={state.sentNumber} class="contact-done stack is-md">
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/></svg>
             <h2>Thanks, {state.form.name.split(" ")[0]}. We're on it.</h2>
             <p>Your request is ticket <strong>#{state.sentNumber}</strong>. We sent a confirmation to {state.form.email}, and our reply will arrive there too.</p>
-            <div><button onclick={() => onAnother(state)}>Send another request</button></div>
+            <div><Button onclick={() => onAnother(state)}>Send another request</Button></div>
           </div>
 
           <form e:else class="is-grid" onsubmit={() => onSubmit(state)}>
-            <div class="field">
-              <label for="name">Your name</label>
-              <input id="name" name="name" autocomplete="name" value={state.form.name} class={[state.errors.name && "is-error"]} required>
-              <p e:if={state.errors.name} class="error">{state.errors.name?.[0]}</p>
-            </div>
+            <Field label="Your name" error={state.errors.name?.[0] ?? ""}>
+              <Input name="name" value={state.form.name} required attrs={{ autocomplete: "name" }} />
+            </Field>
 
-            <div class="field">
-              <label for="email">Email</label>
-              <input id="email" name="email" type="email" autocomplete="email" autocapitalize="none" spellcheck={false} value={state.form.email} class={[state.errors.email && "is-error"]} required>
-              <p e:if={state.errors.email} class="error">{state.errors.email?.[0]}</p>
-            </div>
+            <Field label="Email" error={state.errors.email?.[0] ?? ""}>
+              <Input type="email" name="email" value={state.form.email} required attrs={{ autocomplete: "email", autocapitalize: "none", spellcheck: "false" }} />
+            </Field>
 
-            <div class="field is-full">
-              <label for="subject">Subject</label>
-              <input id="subject" name="subject" maxlength={200} value={state.form.subject} class={[state.errors.subject && "is-error"]} placeholder="Invoices are not sending" required>
-              <p e:if={state.errors.subject} class="error">{state.errors.subject?.[0]}</p>
-            </div>
+            <Field label="Subject" class="is-full" error={state.errors.subject?.[0] ?? ""}>
+              <Input name="subject" value={state.form.subject} placeholder="Invoices are not sending" required attrs={{ maxlength: 200 }} />
+            </Field>
+
+            <Field label="How can we help?" class="is-full" error={state.errors.message?.[0] ?? ""}>
+              <Textarea name="message" rows={7} value={state.form.message} placeholder="What happened, what you expected, and anything you already tried." required />
+            </Field>
 
             <div class="field is-full">
-              <label for="message">How can we help?</label>
-              <textarea id="message" name="message" rows={7} value={state.form.message} class={[state.errors.message && "is-error"]} placeholder="What happened, what you expected, and anything you already tried." required></textarea>
-              <p e:if={state.errors.message} class="error">{state.errors.message?.[0]}</p>
-            </div>
-
-            <div class="field is-full">
-              <button type="submit" class={["is-primary", state.busy && "is-loading"]} disabled={state.busy}>Send to support</button>
+              <Button type="submit" variant="primary" loading={state.busy}>Send to support</Button>
             </div>
           </form>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </main>
   </body>
 </html>

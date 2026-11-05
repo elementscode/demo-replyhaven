@@ -21,10 +21,6 @@
   align-items: start;
 }
 
-.signin-panel > .card {
-  background: var(--bg-elevated);
-}
-
 .signin-head p {
   margin: 0;
   color: var(--ink-soft);

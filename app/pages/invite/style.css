@@ -15,7 +15,6 @@
 .invite-card {
   width: 100%;
   max-width: 26rem;
-  background: var(--bg-elevated);
 }
 
 .invite-card h1 {

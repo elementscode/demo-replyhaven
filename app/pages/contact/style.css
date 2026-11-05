@@ -19,10 +19,6 @@
   color: var(--ink-soft);
 }
 
-.contact-card {
-  background: var(--bg-elevated);
-}
-
 .contact-done {
   text-align: center;
 }

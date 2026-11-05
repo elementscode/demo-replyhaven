@@ -1,6 +1,11 @@
 import "./style.css";
 import { AuthError, ValidationError, redirect, sql } from "@elements/app";
 import { Brand } from "#app/shared/templates/brand";
+import { Alert } from "@elements/ui/alert";
+import { Button } from "@elements/ui/button";
+import { Card, CardContent } from "@elements/ui/card";
+import { Field } from "@elements/ui/field";
+import { Input } from "@elements/ui/input";
 import { User, loginAs } from "#app/shared/services/auth";
 import favicon from "#app/shared/assets/favicons/favicon.svg";
 
@@ -74,8 +79,8 @@ function onSubmit(token: string, form: AcceptForm) {
   </head>
   <body>
     <main class="invite-main">
-      <div class="card invite-card">
-        <div class="card-body">
+      <Card class="invite-card">
+        <CardContent>
           <form e:if={valid} class="stack is-lg" onsubmit={() => onSubmit(token, form)}>
             <div class="stack is-sm">
               <Brand />
@@ -83,20 +88,17 @@ function onSubmit(token: string, form: AcceptForm) {
               <p>Set up the account for {email}.</p>
             </div>
 
-            <p e:if={form.error} class="error" role="alert">{form.error}</p>
+            <Alert e:if={form.error} variant="danger" description={form.error} />
 
-            <div class="field">
-              <label for="name">Your name</label>
-              <input id="name" autocomplete="name" value={form.name} required>
-            </div>
+            <Field label="Your name" reserveError={false}>
+              <Input value={form.name} required attrs={{ autocomplete: "name" }} />
+            </Field>
 
-            <div class="field">
-              <label for="password">Password</label>
-              <input id="password" type="password" autocomplete="new-password" minlength={MIN_PASSWORD} value={form.password} required>
-              <p class="hint">At least {MIN_PASSWORD} characters.</p>
-            </div>
+            <Field label="Password" description={`At least ${MIN_PASSWORD} characters.`}>
+              <Input type="password" value={form.password} required attrs={{ autocomplete: "new-password", minlength: MIN_PASSWORD }} />
+            </Field>
 
-            <button type="submit" class={["is-primary is-block", form.busy && "is-loading"]} disabled={form.busy}>Create account</button>
+            <Button type="submit" variant="primary" block loading={form.busy}>Create account</Button>
           </form>
 
           <div e:else class="stack is-md">
@@ -104,8 +106,8 @@ function onSubmit(token: string, form: AcceptForm) {
             <h1>This invite has expired</h1>
             <p>It was already used or the admin revoked it. Ask the admin for a new one, or <a href="/signin">sign in</a>.</p>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </main>
   </body>
 </html>
