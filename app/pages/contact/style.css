@@ -1,5 +1,4 @@
 @import "#app/shared/styles/page.css";
-@import "#app/shared/templates/brand/style.css";
 
 .page-contact body {
   background: var(--bg-canvas);
