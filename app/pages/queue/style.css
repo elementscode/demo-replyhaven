@@ -82,13 +82,6 @@
   font-size: var(--text-xs);
 }
 
-.tag {
-  padding: 0 var(--space-1-5);
-  border-radius: var(--radius-sm);
-  background: var(--bg-muted);
-  color: var(--ink-soft);
-}
-
 .ticket-flags {
   display: flex;
   align-items: center;

@@ -108,7 +108,7 @@ function useDemo(form: SigninForm, login: DemoLogin, password: string) {
                     <span>{login.name}</span>
                     <small>{login.email}</small>
                   </span>
-                  <Badge variant={login.role === "admin" ? "accent" : "outline"}>{login.role}</Badge>
+                  <Badge variant={login.role === "admin" ? "accent" : "neutral"}>{login.role}</Badge>
                 </button>
               </li>
             </ul>

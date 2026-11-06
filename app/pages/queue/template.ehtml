@@ -121,7 +121,7 @@ function statusVariant(status: string): BadgeVariant {
           <TabsList label="Queue views">
             <TabsTrigger e:for={v of VIEWS} value={v.key}>
               {v.label}
-              <Badge variant="outline">{count(tickets, v.key, me.id)}</Badge>
+              <Badge variant="neutral">{count(tickets, v.key, me.id)}</Badge>
             </TabsTrigger>
           </TabsList>
 
@@ -137,7 +137,7 @@ function statusVariant(status: string): BadgeVariant {
                       <span>{t.customerName}</span>
                       <span aria-hidden="true">·</span>
                       <span>opened {ago(t.createdAt, now.value)}</span>
-                      <span e:for={tag of t.tags} class="tag">{tag}</span>
+                      <Badge e:for={tag of t.tags} variant="neutral" class="normal-case">{tag}</Badge>
                     </span>
                   </span>
 

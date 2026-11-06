@@ -122,7 +122,7 @@ function onRevoke(revoking: Revoking, list: { members: TeamMember[] }) {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell><Badge variant={m.role === "admin" ? "accent" : "outline"}>{m.role}</Badge></TableCell>
+                  <TableCell><Badge variant={m.role === "admin" ? "accent" : "neutral"}>{m.role}</Badge></TableCell>
                   <TableCell>
                     <Badge e:if={m.active} variant="success" dot>Active</Badge>
                     <Badge e:else variant="warning" dot>Invited</Badge>

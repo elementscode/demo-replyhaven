@@ -216,7 +216,7 @@ function kindLabel(m: Message): string {
             <Badge e:if={isOverdue(current(ticket), now.value)} variant="danger" dot>
               Overdue {duration(+now.value - +firstReplyDueAt(current(ticket)))}
             </Badge>
-            <Badge e:elseif={dueLabel(current(ticket), now.value)} variant="outline">First reply {dueLabel(current(ticket), now.value)}</Badge>
+            <Badge e:elseif={dueLabel(current(ticket), now.value)} variant="neutral">First reply {dueLabel(current(ticket), now.value)}</Badge>
           </div>
           <div class="ticket-presence row is-start gap-2" aria-live="polite">
             <AvatarGroup e:if={othersViewing(watching.list, me.id).length > 0} label="Also viewing">
