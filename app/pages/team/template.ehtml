@@ -38,27 +38,14 @@ function onInvite(form: InviteForm, list: { members: TeamMember[] }) {
   form.busy = false;
 }
 
-interface Revoking {
-  open: boolean;
-  member: TeamMember | null;
-}
-
-function onAskRevoke(revoking: Revoking, member: TeamMember) {
-  revoking.member = member;
-  revoking.open = true;
-}
-
-function onRevoke(revoking: Revoking, list: { members: TeamMember[] }) {
-  if (revoking.member) {
-    list.members = revokeInvite(revoking.member.id);
-  }
+function onRevoke(member: TeamMember, list: { members: TeamMember[] }) {
+  list.members = revokeInvite(member.id);
 }
 
 <html lang="en" class="page-team" (
   me: ShellUser,
   members: TeamMember[],
   private list: { members: TeamMember[] } = { members },
-  private revoking: Revoking = { open: false, member: null },
   private form: InviteForm = {
     email: "",
     name: "",
@@ -113,7 +100,7 @@ function onRevoke(revoking: Revoking, list: { members: TeamMember[] }) {
               </thead>
               <tbody>
                 <tr e:for={m of list.members}>
-                  <TableCell>
+                  <TableCell wrap>
                     <div class="team-person">
                       <Avatar alt={m.name || m.email} fallback={initials(m.name || m.email)} />
                       <div>
@@ -129,20 +116,19 @@ function onRevoke(revoking: Revoking, list: { members: TeamMember[] }) {
                   </TableCell>
                   <TableCell align="end">{m.openTickets}</TableCell>
                   <TableCell align="end">
-                    <Button e:if={!m.active} size="sm" onclick={() => onAskRevoke(revoking, m)}>Revoke</Button>
+                    <AlertDialog e:if={!m.active} title={`Revoke the invite for ${m.email}?`} size="sm">
+                      <Button slot="trigger" size="sm">Revoke</Button>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction variant="danger" onclick={() => onRevoke(m, list)}>Revoke</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialog>
                   </TableCell>
                 </tr>
               </tbody>
             </table>
           </Table>
         </Card>
-
-        <AlertDialog open={revoking.open} title={`Revoke the invite for ${revoking.member?.email ?? ""}?`} size="sm">
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction variant="danger" onclick={() => onRevoke(revoking, list)}>Revoke</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialog>
       </div>
     </Shell>
   </body>

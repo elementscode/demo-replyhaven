@@ -32,6 +32,7 @@
 .team-person small {
   display: block;
   color: var(--ink-dim);
+  overflow-wrap: anywhere;
 }
 
 @media (max-width: 48rem) {
